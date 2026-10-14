@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { AppShell } from "@/components/AppShell";
 import { ToastViewport } from "@/components/ToastViewport";
 
 import "./globals.css";
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        {/* The shell is a client component, but children arrive as slots and
+            stay server-rendered — no page becomes a client component. */}
+        <AppShell>{children}</AppShell>
         <ToastViewport />
       </body>
     </html>

@@ -48,3 +48,22 @@ body {
 .toast-enter {
   animation: toast-in 220ms cubic-bezier(0.21, 1.02, 0.73, 1);
 }
+
+/* Cursor-following 3D tilt on the anime cards. The angles arrive from
+   lib/useTilt.ts as custom properties, so everything visual stays in CSS and
+   the hook only ever writes two values.
+
+   `transform` is used here rather than `translate`/`rotate` on purpose:
+   Tailwind v4 writes the hover lift to the standalone `translate` property and
+   the poster zoom to `scale`, so all three compose instead of overwriting one
+   another.
+
+   This rule is intentionally unlayered, so it outranks Tailwind's layered
+   utilities — which is also why reduced motion is handled in the hook rather
+   than with a `motion-reduce:` utility: that utility would lose the cascade,
+   and without JavaScript there is no tilt to suppress in the first place. */
+.card-tilt {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+}

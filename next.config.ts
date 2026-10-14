@@ -6,9 +6,14 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   images: {
-    // Anime posters are served from MyAnimeList's CDN; next/image only
+    // Posters come from two CDNs: AniList serves its own covers from
+    // s4.anilist.co, and the local test mock reuses MyAnimeList poster URLs so
+    // the artwork on screen matches the title above it. next/image only
     // optimizes hosts that are explicitly allow-listed here.
-    remotePatterns: [{ protocol: "https", hostname: "cdn.myanimelist.net" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "s4.anilist.co" },
+      { protocol: "https", hostname: "cdn.myanimelist.net" },
+    ],
   },
   turbopack: {
     rules: {

@@ -2,10 +2,17 @@ import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 import type { Anime } from "@/types/anime";
 import type { WatchlistEntries, WatchlistEntry, WatchlistStatus } from "@/types/watchlist";
-import { WATCHLIST_STATUSES } from "@/types/watchlist";
+import { isWatchlistStatus, WATCHLIST_STATUSES } from "@/types/watchlist";
 
-/** Versioned so a future shape change can migrate instead of silently breaking. */
-const STORAGE_KEY = "anime-watchlist:v1";
+/**
+ * Versioned so a future shape change can migrate instead of silently breaking.
+ *
+ * v2: ids switched from MyAnimeList to AniList. The two are unrelated
+ * numbering schemes for the same shows, so entries saved under v1 point at
+ * ids this app can no longer resolve — better to start clean than show
+ * rows whose detail links all404.
+ */
+const STORAGE_KEY = "anime-watchlist:v2";
 
 /** What the server renders, and the value an empty client store starts from. */
 const EMPTY_ENTRIES: WatchlistEntries = Object.freeze({});
@@ -29,10 +36,6 @@ function parseJson(raw: string | null): unknown {
     // Corrupt JSON; sanitizeEntries() below turns this into an empty store.
     return null;
   }
-}
-
-function isWatchlistStatus(value: unknown): value is WatchlistStatus {
-  return typeof value === "string" && (WATCHLIST_STATUSES as readonly string[]).includes(value);
 }
 
 /** Keeps only well-formed entries, so hand-edited storage can't crash the UI. */

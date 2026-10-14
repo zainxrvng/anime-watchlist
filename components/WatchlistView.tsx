@@ -8,10 +8,18 @@ import { WatchlistTabs } from "@/components/WatchlistTabs";
 import { useWatchlist } from "@/lib/useWatchlist";
 import { WATCHLIST_LABELS, type WatchlistStatus } from "@/types/watchlist";
 
+interface WatchlistViewProps {
+  /**
+   * Which list to open on. The sidebar passes this from `?list=` so choosing
+   * "Completed" there lands on Completed rather than the default tab.
+   */
+  initialStatus?: WatchlistStatus;
+}
+
 /** Tabbed view over the three saved lists. */
-export function WatchlistView() {
+export function WatchlistView({ initialStatus = "watching" }: WatchlistViewProps) {
   const { lists } = useWatchlist();
-  const [active, setActive] = useState<WatchlistStatus>("watching");
+  const [active, setActive] = useState<WatchlistStatus>(initialStatus);
   const savedAnime = lists[active];
 
   return (

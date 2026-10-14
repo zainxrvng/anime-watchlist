@@ -3,7 +3,7 @@ import { connection } from "next/server";
 
 import { AnimeDetail } from "@/components/AnimeDetail";
 import { LoadErrorState } from "@/components/LoadErrorState";
-import { getAnimeById, JikanApiError } from "@/lib/jikan";
+import { getAnimeById, AniListApiError } from "@/lib/anilist";
 import type { Anime } from "@/types/anime";
 
 interface AnimeDetailPageProps {
@@ -16,8 +16,8 @@ interface AnimeDetailPageProps {
 export const instant = false;
 
 export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) {
-  // connection() stops prefetches from firing Jikan requests for pages the
-  // user may never open, which protects the 3 requests/second budget.
+  // connection() stops prefetches from firing AniList requests for pages the
+  // user may never open, which protects the 90-requests/minute budget.
   await connection();
 
   const { id } = await params;
@@ -34,7 +34,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
   } catch (error) {
     // A title that doesn't exist is a real 404; a timeout or rate limit is
     // not, and calling notFound() for those would send users to a dead end.
-    if (error instanceof JikanApiError && error.status === 404) {
+    if (error instanceof AniListApiError && error.status === 404) {
       notFound();
     }
 

@@ -5,6 +5,14 @@ export const WATCHLIST_STATUSES = ["watching", "planToWatch", "completed"] as co
 
 export type WatchlistStatus = (typeof WATCHLIST_STATUSES)[number];
 
+/**
+ * Runtime guard for values arriving from outside the type system — a `?list=`
+ * query parameter, or hand-edited localStorage.
+ */
+export function isWatchlistStatus(value: unknown): value is WatchlistStatus {
+  return typeof value === "string" && (WATCHLIST_STATUSES as readonly string[]).includes(value);
+}
+
 /** Display names, shared by the card dropdown and the watchlist page tabs. */
 export const WATCHLIST_LABELS: Record<WatchlistStatus, string> = {
   watching: "Watching",

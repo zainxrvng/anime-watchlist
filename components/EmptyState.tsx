@@ -18,7 +18,7 @@ export function EmptyState({ query }: EmptyStateProps) {
       <p className="max-w-sm text-sm text-zinc-400">
         {isSearch
           ? "Check the spelling, or try a shorter or more general title."
-          : "Jikan returned no results — try again in a moment."}
+          : "AniList returned no results — try again in a moment."}
       </p>
     </div>
   );

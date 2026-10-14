@@ -3,10 +3,8 @@
 // Two layers live in this file:
 //   1. Clean app types (Anime, AnimeListResult) — camelCase, limited to the
 //      fields the UI actually needs. Components consume only these.
-//   2. Raw Jikan wire types (RawJikan*) — the snake_case shapes Jikan really
-//      sends. Only lib/jikan.ts reads them, then maps them down to layer 1.
-
-import type { JikanListResponse, JikanResponse } from "@/types";
+//   2. Raw AniList wire types (RawAniList*) — the exact GraphQL shapes AniList
+//      returns. Only lib/anilist.ts reads them, then maps them down to layer 1.
 
 // ---------------------------------------------------------------------------
 // Clean app types
@@ -14,21 +12,21 @@ import type { JikanListResponse, JikanResponse } from "@/types";
 
 /** One anime, simplified to exactly the fields this app displays. */
 export interface Anime {
-  /** MyAnimeList id, e.g. 20 for "Naruto". */
+  /** AniList id, e.g. 154587 for "Sousou no Frieren". */
   id: number;
   title: string;
   /** Absolute URL of the poster image; empty string when unavailable. */
   image: string;
-  /** Community score out of 10; null while Jikan has no score yet. */
+  /** Community score out of 10; null while AniList has no rating yet. */
   score: number | null;
   /** Total episode count; null for ongoing or unannounced anime. */
   episodes: number | null;
   synopsis: string;
-  /** Genre names only, e.g. ["Action", "Adventure"] — not Jikan's objects. */
+  /** Genre names only, e.g. ["Action", "Adventure"] — already plain strings. */
   genres: string[];
   /** e.g. "Finished Airing", "Currently Airing", "Not yet aired". */
   status: string;
-  /** Release year; null when Jikan doesn't know it (older/unknown titles). */
+  /** Release year; null when AniList doesn't know it. */
   year: number | null;
 }
 
@@ -46,36 +44,81 @@ export interface AnimeListResult {
 }
 
 // ---------------------------------------------------------------------------
-// Raw Jikan wire types — internal to lib/jikan.ts
+// Raw AniList wire types — internal to lib/anilist.ts
 // ---------------------------------------------------------------------------
 
-/** Jikan ships several image formats; we only ever need one URL. */
-export interface RawJikanImages {
-  jpg?: { image_url?: string };
-  webp?: { image_url?: string };
+/** AniList returns the three title variants together; we pick one. */
+export interface RawAniListTitle {
+  romaji?: string | null;
+  english?: string | null;
+  native?: string | null;
 }
 
-export interface RawJikanGenre {
-  mal_id: number;
-  name: string;
-  type?: string;
+export interface RawAniListCoverImage {
+  large?: string | null;
+  extraLarge?: string | null;
 }
 
-/** A single anime object exactly as Jikan returns it. */
-export interface RawJikanAnime {
-  mal_id: number;
-  title?: string;
-  images?: RawJikanImages;
-  score?: number | null;
-  episodes?: number | null;
-  synopsis?: string | null;
-  genres?: RawJikanGenre[] | null;
-  status?: string | null;
+export interface RawAniListStartDate {
   year?: number | null;
 }
 
-/** Body of Jikan's list endpoints: /anime search and /top/anime. */
-export type RawJikanListResponse = JikanListResponse<RawJikanAnime>;
+/** The full set of values AniList's `Media.status` can take. */
+export type RawAniListStatus =
+  | "FINISHED"
+  | "RELEASING"
+  | "NOT_YET_RELEASED"
+  | "CANCELLED"
+  | "HIATUS";
 
-/** Body of Jikan's single-anime endpoint: /anime/{id}. */
-export type RawJikanItemResponse = JikanResponse<RawJikanAnime>;
+/** A single anime object exactly as AniList returns it. */
+export interface RawAniListAnime {
+  id: number;
+  title?: RawAniListTitle | null;
+  coverImage?: RawAniListCoverImage | null;
+  /** 0-100, or null when nobody has rated it yet. */
+  averageScore?: number | null;
+  episodes?: number | null;
+  /** Plain text when requested with `description(asHtml: false)`. */
+  description?: string | null;
+  /** AniList sends genre names as a flat string array — no wrapper objects. */
+  genres?: string[] | null;
+  status?: RawAniListStatus | null;
+  seasonYear?: number | null;
+  startDate?: RawAniListStartDate | null;
+}
+
+/** `data.Page` from a list or search query. */
+export interface RawAniListPage {
+  pageInfo?: {
+    currentPage?: number | null;
+    lastPage?: number | null;
+    hasNextPage?: boolean | null;
+  } | null;
+  media?: RawAniListAnime[] | null;
+}
+
+/** Body of AniList's Page queries: top list and search. */
+export interface RawAniListListResponse {
+  data?: { Page?: RawAniListPage | null } | null;
+}
+
+/** Body of AniList's single-Media query. */
+export interface RawAniListItemResponse {
+  data?: { Media?: RawAniListAnime | null } | null;
+}
+
+/**
+ * AniList reports failures through this array rather than only an HTTP status,
+ * and a query can return both a partial `data` and `errors` at once.
+ */
+export interface RawAniListError {
+  message?: string;
+  /** Present on validation and "not found" style failures. */
+  status?: number;
+  validation?: string[];
+}
+
+export interface RawAniListErrorResponse {
+  errors?: RawAniListError[];
+}

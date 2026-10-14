@@ -1,9 +1,10 @@
 // Resolves the real MyAnimeList poster URL for each title in
-// mock-jikan-home.mjs's catalog, so the mock never shows artwork that belongs
+// mock-anilist.mjs's catalog, so the mock never shows artwork that belongs
 // to a different anime.
 //
-// api.jikan.moe is unreachable from this machine, but myanimelist.net is not,
-// and every anime page carries an authoritative og:image poster. So: search
+// The live AniList API can't be relied on for this from here, but
+// myanimelist.net is reachable, and every anime page carries an authoritative
+// og:image poster. So: search
 // MAL for the title, take the canonical page whose slug matches, read its
 // og:image. Run it and paste the printed URLs into the mock's ENTRIES list.
 //

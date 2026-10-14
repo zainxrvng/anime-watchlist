@@ -36,7 +36,7 @@ export function AnimeDetail({ anime }: AnimeDetailProps) {
                 className="object-cover"
               />
             ) : (
-              // Jikan sometimes omits artwork; keep the layout intact anyway.
+              // AniList sometimes omits artwork; keep the layout intact anyway.
               <div className="flex h-full w-full items-center justify-center text-xs text-zinc-500">
                 No image
               </div>
