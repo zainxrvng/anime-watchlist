@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  images: {
+    // Anime posters are served from MyAnimeList's CDN; next/image only
+    // optimizes hosts that are explicitly allow-listed here.
+    remotePatterns: [{ protocol: "https", hostname: "cdn.myanimelist.net" }],
+  },
   turbopack: {
     rules: {
       "*.css": {

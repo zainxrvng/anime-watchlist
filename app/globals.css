@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
+/* This app is dark-first, so the `dark` class is pinned to <html> and every
+   `dark:` variant applies regardless of what the OS reports. Tailwind v4
+   defaults `dark:` to the media query, so it has to be re-pointed at the class. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  /* Deep blue-black rather than pure black: easier on the eyes over a long
+     session, and it flatters the poster art the way a pure #000 does not. */
+  --background: #0a0a12;
+  --foreground: #ececf2;
+  /* The one accent colour. Every interactive element uses it, so the app
+     reads as a single palette rather than a set of one-off blues. */
+  --accent: #8b5cf6;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* The Geist variable is set on <html> by next/font; without this the body
+     fell back to Arial and the font never reached the UI. */
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* Native form controls and scrollbars follow the accent too. */
+  accent-color: var(--accent);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-enter {
+  animation: toast-in 220ms cubic-bezier(0.21, 1.02, 0.73, 1);
 }
