@@ -9,10 +9,16 @@ import type { Anime } from "@/types/anime";
 
 interface AnimeCardProps {
   anime: Anime;
+  /**
+   * True for the first card in the grid. That poster is the page's LCP, so it
+   * needs `loading="eager"` — the default `next/image` lazy-loads, which asks
+   * the browser to defer the one paint that matters most.
+   */
+  priority?: boolean;
 }
 
 /** Poster, title, score and episode count for a single anime. */
-export function AnimeCard({ anime }: AnimeCardProps) {
+export function AnimeCard({ anime, priority = false }: AnimeCardProps) {
   // AniList leaves these null for ongoing or unannounced titles — show it plainly.
   const scoreLabel = anime.score === null ? "N/A" : anime.score.toFixed(1);
   const episodeLabel = anime.episodes === null ? "?" : `${anime.episodes} ep`;
@@ -48,6 +54,7 @@ export function AnimeCard({ anime }: AnimeCardProps) {
             src={anime.image}
             alt={`${anime.title} poster`}
             fill
+            priority={priority}
             // Matches the grid: 50vw at 2 cols, up to 20vw at 5 cols.
             sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none"

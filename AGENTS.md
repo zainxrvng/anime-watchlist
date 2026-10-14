@@ -46,6 +46,19 @@ Project rules for working in this repository. Follow them for every task.
   `motion-reduce:` utility, which would lose that cascade. Tilt uses
   `transform` because Tailwind v4 puts the hover lift in `translate` and the
   poster zoom in `scale`, so all three compose instead of colliding.
+- **Ambient 3D**: every page carries a fixed, `pointer-events: none` WebGL
+  layer at `z-index: -1` (`components/AmbientBackground.tsx`, React Three
+  Fiber + Bloom), and `components/CursorLight.tsx` paints an additive violet
+  glow over the page at `z-index: 45` — above the app so the light lands on
+  it, below toasts so a notification never gets washed. Both gates fail
+  **closed**: no `prefers-reduced-motion`, and no WebGL, means no canvas at
+  all. Detect it up front rather than letting R3F throw a page error, because
+  every UI suite asserts "no JavaScript errors" and a GPU-less browser must
+  degrade to the CSS wash instead. The canvas loads through
+  `next/dynamic({ ssr: false })`, which is what keeps three.js out of the
+  server bundle. Cursor position lives in module scope (`lib/pointer.ts`),
+  written by the light and read once a frame by the scene — the same
+  no-re-render rule as the tilt and the toast store.
 - **Theme**: The app is dark-first — `<html>` carries the `dark` class and
   `@custom-variant dark` in `globals.css` points the `dark:` variant at it, so
   the palette never depends on the OS setting. Use **one accent colour**
@@ -80,7 +93,7 @@ rate limiting and retries on the server.
   `ANILIST_BASE_URL=http://127.0.0.1:4399/graphql npm run dev`
   runs the UI against a local AniList stand-in. Use this whenever the real
   `graphql.anilist.co` is not what you want to test against — it is what all
-  six UI suites run on, because they need deterministic data.
+  eight UI suites run on, because they need deterministic data.
 - `node scripts/mock-anilist.mjs` then `npx tsx scripts/verify-anilist.ts`
   checks rate limiting, 429 retries, 5xx retries, not-found handling and
   response mapping in `lib/anilist.ts`. One mock process serves this and the
@@ -98,14 +111,20 @@ rate limiting and retries on the server.
   machine can reach AniList at all, and to confirm that a blocked host fails in
   bounded time with an `AniListApiError` rather than hanging on the socket.
 - The UI suites live outside the project in `%LOCALAPPDATA%\Temp\opencode\uitest\`
-  and expect a dev server running against the mock. Seven suites, all required:
+  and expect a dev server running against the mock. Eight suites, all required:
   `ui-test.js`, `detail-test.js`, `watchlist-test.js`, `polish-test.js`,
   `pairing-test.js`, `nav-test.js` — the last covers the sidebar, the
   card→detail navigation, and a guard that card links don't fire one AniList
-  request per card — and `tilt-test.js`, which drives a real mouse across a
+  request per card — `tilt-test.js`, which drives a real mouse across a
   card and asserts the rotation appears, settles back to flat, is suppressed
   under `prefers-reduced-motion`, and that hovering still raises `z-index` to
-  10.
+  10, and `ambient-test.js`, which checks the 3D layer is fixed, behind
+  content and ignoring the pointer, that it really paints (measured by diffing
+  a screenshot against the same frame with the ambient layers hidden —
+  `gl.readPixels` after a composite always reads black, since
+  `preserveDrawingBuffer` is deliberately off), and that the cursor light
+  writes `--pointer-x`/`--pointer-y`, blends `plus-lighter`, sits at
+  `z-index: 45` and never takes a click.
 
 ## Status
 
@@ -173,6 +192,24 @@ rate limiting and retries on the server.
   hook when `prefers-reduced-motion` is set. `AnimeCard` had to become a
   client component for this; the cards still server-render, since a client
   component with serializable props renders on the server too.
+- Every page now sits on an ambient 3D layer, and the cursor is a light. The
+  project carries `three`, `@react-three/fiber` and
+  `@react-three/postprocessing`: `components/AmbientCanvas.tsx` renders 54
+  instanced violet shards and 240 additive embers through a Bloom pass, with a
+  point light that unprojects the cursor onto the z=0 plane so the background
+  brightens exactly where you point. `components/AmbientBackground.tsx` gates
+  the mount on WebGL support and `prefers-reduced-motion`, and loads the
+  canvas with `ssr: false` so three.js never reaches the server bundle.
+  `components/CursorLight.tsx` paints the matching glow over the UI — additive
+  (`plus-lighter`), because normal alpha would veil what is underneath rather
+  than light it. Three layers stack in `globals.css`: a static violet wash,
+  the canvas at `z-index: -1`, and the cursor glow at `z-index: 45`. All are
+  `position: fixed` with `inset: 0`, so none can widen the scroll area. The
+  first pass shipped the shards far too hot — a low Bloom threshold blew them
+  white and the translucent cards showed them through as blotches, 42% of the
+  frame — so they are now small, distant and dim, with only the brightest
+  cores blooming. The first grid poster is also marked `priority`, since it is
+  the page's LCP and `next/image` lazy-loads by default.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

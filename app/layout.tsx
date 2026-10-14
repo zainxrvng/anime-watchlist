@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { AppShell } from "@/components/AppShell";
+import { CursorLight } from "@/components/CursorLight";
 import { ToastViewport } from "@/components/ToastViewport";
 
 import "./globals.css";
@@ -30,10 +32,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Ambient layers first so they paint underneath: the violet wash and
+            the 3D scene are z-index -1, the cursor light is z-45. All three are
+            position: fixed, so they leave this flex layout alone. */}
+        <AmbientBackground />
+
         {/* The shell is a client component, but children arrive as slots and
             stay server-rendered — no page becomes a client component. */}
         <AppShell>{children}</AppShell>
         <ToastViewport />
+        <CursorLight />
       </body>
     </html>
   );

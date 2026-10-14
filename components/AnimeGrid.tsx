@@ -17,8 +17,12 @@ interface AnimeGridProps {
 export function AnimeGrid({ anime }: AnimeGridProps) {
   return (
     <div className={ANIME_GRID_CLASSES}>
-      {anime.map((item) => (
-        <AnimeCard key={item.id} anime={item} />
+      {anime.map((item, index) => (
+        // Only the first poster is above the fold on every screen size — it
+        // is the page's Largest Contentful Paint, and Image's default
+        // loading="lazy" would put the single biggest paint behind a lazy
+        // load. Everything else stays lazy, which is the point of the default.
+        <AnimeCard key={item.id} anime={item} priority={index === 0} />
       ))}
     </div>
   );

@@ -49,6 +49,64 @@ body {
   animation: toast-in 220ms cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 
+/* --- Ambient lighting ---------------------------------------------------
+   Three stacked layers, all non-interactive:
+
+     body::before       violet wash, always present
+     .ambient-layer     the 3D scene, z-index -1 (above the wash, below content)
+     .cursor-light      additive glow over everything, z-index 45
+
+   Fixed positioning takes all three out of the flex layout in <body>, so they
+   never affect flow, and `inset: 0` on each means none of them can widen the
+   scroll area — the mobile "no horizontal overflow" check depends on that.
+
+   The wash is deliberately static. It carries the mood when WebGL is missing
+   or the user asked for reduced motion; every bit of actual movement comes
+   from the 3D layer, which already refuses to start in both of those cases. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 28rem at 12% 6%, rgb(139 92 246 / 0.16), transparent 62%),
+    radial-gradient(32rem 26rem at 90% 16%, rgb(124 58 237 / 0.13), transparent 60%),
+    radial-gradient(44rem 34rem at 74% 94%, rgb(167 139 250 / 0.1), transparent 66%),
+    radial-gradient(28rem 22rem at 20% 80%, rgb(91 33 182 / 0.14), transparent 62%);
+}
+
+.ambient-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Sits at z-45: above the app and its dropdowns so the light lands on the UI,
+   below toasts (z-50) so a notification never gets a wash over it. Blended
+   additively rather than composited normally — normal alpha would veil what is
+   underneath, which is the opposite of how light behaves. In a dark theme this
+   raises the background far more than near-white text, so contrast holds. */
+.cursor-light {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  opacity: var(--pointer-seen, 0);
+  transition: opacity 500ms ease;
+  mix-blend-mode: plus-lighter;
+  background:
+    radial-gradient(
+      540px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      rgb(139 92 246 / 0.2),
+      rgb(139 92 246 / 0.08) 34%,
+      transparent 66%
+    ),
+    radial-gradient(170px circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgb(196 181 253 / 0.32), transparent 70%);
+}
+
 /* Cursor-following 3D tilt on the anime cards. The angles arrive from
    lib/useTilt.ts as custom properties, so everything visual stays in CSS and
    the hook only ever writes two values.
